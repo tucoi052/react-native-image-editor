@@ -29,6 +29,9 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.BitmapFactory;
+import android.graphics.Bitmap.Config;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.media.ExifInterface;
@@ -219,10 +222,11 @@ public class ImageEditorModule extends ReactContextBaseJavaModule {
         int height,
         Promise promise) {
       super(context);
-      if (x < 0 || y < 0 || width <= 0 || height <= 0) {
-        throw new JSApplicationIllegalArgumentException(String.format(
-            "Invalid crop rectangle: [%d, %d, %d, %d]", x, y, width, height));
-      }
+      //disable check negative boundary values.
+      // if (x < 0 || y < 0 || width <= 0 || height <= 0) {
+      //   throw new JSApplicationIllegalArgumentException(String.format(
+      //       "Invalid crop rectangle: [%d, %d, %d, %d]", x, y, width, height));
+      // }
       mContext = context;
       mUri = uri;
       mX = x;
@@ -259,7 +263,6 @@ public class ImageEditorModule extends ReactContextBaseJavaModule {
     protected void doInBackgroundGuarded(Void... params) {
       try {
         BitmapFactory.Options outOptions = new BitmapFactory.Options();
-
         // If we're downscaling, we can decode the bitmap more efficiently, using less memory
         boolean hasTargetSize = (mTargetWidth > 0) && (mTargetHeight > 0);
 
@@ -297,9 +300,21 @@ public class ImageEditorModule extends ReactContextBaseJavaModule {
       // Effeciently crops image without loading full resolution into memory
       // https://developer.android.com/reference/android/graphics/BitmapRegionDecoder.html
       BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(inputStream, false);
+     
       try {
         Rect rect = new Rect(mX, mY, mX + mWidth, mY + mHeight);
-        return decoder.decodeRegion(rect, outOptions);
+        Bitmap oldBitmap = decoder.decodeRegion(rect, outOptions);
+         Bitmap newBitmap = Bitmap.createBitmap(oldBitmap.getWidth(), oldBitmap.getHeight(), oldBitmap.getConfig()); 
+ 
+        // Instantiate a canvas and prepare it to paint to the new bitmap
+        Canvas canvas = new Canvas(newBitmap);
+        
+        // Paint it white (or whatever color you want)
+        canvas.drawColor(Color.BLACK);
+        
+        // Draw the old bitmap ontop of the new white one
+        canvas.drawBitmap(oldBitmap, 0, 0, null);
+        return newBitmap;
       } finally {
         if (inputStream != null) {
           inputStream.close();

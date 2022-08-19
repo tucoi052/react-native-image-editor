@@ -1,6 +1,7 @@
 # react-native-image-editor
 
 Image Editor Native module for React Native.
+Allows cropping images with negative offset.
 
 [![Build Status][build-badge]][build]
 [![Version][version-badge]][package]
@@ -12,26 +13,26 @@ Image Editor Native module for React Native.
 
 ### Install
 
-`yarn add @react-native-community/image-editor`
+`clone this project to local source`
+
+`yarn add 'dir'/react-native-editor`
 
 or
 
-`npm install @react-native-community/image-editor --save`
+`npm install 'dir'/react-native-editor --save`
+
 
 ### Install Pods
 
 `npx pod-install`
 
-### Link
-
-`react-native link @react-native-community/image-editor`
 
 ## Usage
 
 Start by importing the library:
 
 ```javascript
-import ImageEditor from "@react-native-community/image-editor";
+import ImageEditor from "react-native-image-editor";
 ```
 
 ### Crop image

@@ -58,22 +58,20 @@ RCT_EXPORT_METHOD(cropImage:(NSURLRequest *)imageRequest
       reject(@(error.code).stringValue, error.description, error);
       return;
     }
-
     // Crop image
     CGSize targetSize = rect.size;
     CGRect targetRect = {{-rect.origin.x, -rect.origin.y}, image.size};
     CGAffineTransform transform = RCTTransformFromTargetRect(image.size, targetRect);
-    UIImage *croppedImage = RCTTransformImage(image, targetSize, image.scale, transform);
-
+    UIImage *croppedImage = RCTTransformImage2(image, targetSize, image.scale, transform);
+    
     // Scale image
     if (cropData[@"displaySize"]) {
       targetSize = [RCTConvert CGSize:cropData[@"displaySize"]]; // in pixels
       RCTResizeMode resizeMode = [RCTConvert RCTResizeMode:cropData[@"resizeMode"] ?: @"contain"];
       targetRect = RCTTargetRect(croppedImage.size, targetSize, 1, resizeMode);
       transform = RCTTransformFromTargetRect(croppedImage.size, targetRect);
-      croppedImage = RCTTransformImage(croppedImage, targetSize, image.scale, transform);
+      croppedImage = RCTTransformImage2(croppedImage, targetSize, image.scale, transform);
     }
-
     // Store image
     NSString *path = NULL;
     NSData *imageData = NULL;
@@ -100,4 +98,27 @@ RCT_EXPORT_METHOD(cropImage:(NSURLRequest *)imageRequest
   }];
 }
 
+UIImage *__nullable RCTTransformImage2(UIImage *image,
+                                      CGSize destSize,
+                                      CGFloat destScale,
+                                      CGAffineTransform transform)
+{
+  if (destSize.width <= 0 | destSize.height <= 0 || destScale <= 0) {
+    return nil;
+  }
+
+  BOOL opaque = !RCTImageHasAlpha(image.CGImage);
+  UIGraphicsImageRendererFormat *const rendererFormat = [UIGraphicsImageRendererFormat defaultFormat];
+  rendererFormat.opaque = opaque;
+  rendererFormat.scale = destScale;
+  UIGraphicsImageRenderer *const renderer = [[UIGraphicsImageRenderer alloc] initWithSize:destSize format:rendererFormat];
+  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *_Nonnull context) {
+    [[UIColor colorWithRed:0 green:0 blue:0 alpha:1] setFill];
+    [context fillRect:CGRectMake(0, 0, destSize.width, destSize.height)];
+    CGContextConcatCTM(context.CGContext, transform);
+    [image drawAtPoint:CGPointZero];
+  }];
+}
+
 @end
+
